@@ -15,6 +15,8 @@ function message(text,success=false){notice.textContent=text;notice.classList.to
 function errorText(error){return ({
   identifiants_invalides:'Adresse e-mail ou mot de passe incorrect.',
   email_ou_pseudo_deja_utilise_ou_base_indisponible:'Cette adresse ou ce pseudo est déjà utilisé, ou le service est indisponible.',
+  smtp_requis:'La création de compte nécessite la configuration de l’envoi d’e-mails.',
+  smtp_indisponible:'L’e-mail de vérification n’a pas pu être envoyé. Réessayez plus tard.',
   inscription_invalide:'Vérifiez le pseudo, l’adresse e-mail et les critères du mot de passe.',
   code_expire_ou_bloque:'Code expiré. Recommencez l’inscription pour en recevoir un autre.',
   code_incorrect:'Ce code ne correspond pas. Vérifiez le message reçu.',
@@ -92,9 +94,9 @@ byId('registerForm').onsubmit=async event=>{
   event.preventDefault();const form=new FormData(event.currentTarget);const values=Object.fromEntries(form);
   values.email=String(values.email).trim().toLowerCase();values.username=String(values.username).trim().toLowerCase();pendingEmail=values.email;
   try{
-    await api('/api/auth/register',{method:'POST',body:JSON.stringify(values)});
+    const result=await api('/api/auth/register',{method:'POST',body:JSON.stringify(values)});
     byId('loginForm').hidden=true;byId('registerForm').hidden=true;byId('verifyForm').hidden=false;
-    message('Inscription créée. Vérifiez votre boîte e-mail pour le code à six chiffres.',true);
+    message(result.developmentCode?`Mode développement · code de vérification : ${result.developmentCode}`:'Inscription créée. Vérifiez votre boîte e-mail pour le code à six chiffres.',true);
   }catch(error){message(errorText(error));}
 };
 byId('verifyForm').onsubmit=async event=>{

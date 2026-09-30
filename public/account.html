@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Compte et amis · Mathable</title>
   <link rel="stylesheet" href="/social.css">
+  <style>
+    .account-topbar{height:72px;padding:0 clamp(16px,4vw,56px);background:var(--blue);border-bottom:0;box-shadow:0 3px 12px #0d2c5440}
+    .account-topbar .brand{color:#fff}
+    .account-topbar .brand-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--blue);font:700 23px 'Space Grotesk',sans-serif}
+    .account-topbar .brand small{color:#fff;opacity:.75}
+    .account-topbar .quiet-link{color:#fff}
+    .account-topbar .quiet-link span{color:var(--yellow)}
+    .account-header-actions{display:flex;align-items:center;gap:14px}
+    .account-home-button{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #ffffff66;border-radius:4px;background:#ffffff20;color:#fff;font-size:13px;font-weight:700;text-decoration:none}
+    .account-home-button:hover{background:#ffffff35}
+    @media(max-width:560px){.account-topbar .brand small{display:none}.account-header-actions{gap:9px}.account-home-button{padding:7px 9px;font-size:12px}}
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/account.html"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>COMPTES ET PARTIES</small></span></a>
-    <a class="quiet-link" href="/game.html">Jouer en solo <span aria-hidden="true">↗</span></a>
+  <header class="topbar account-topbar">
+    <a class="brand" href="/"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>CALCULER · CONNECTER · GAGNER</small></span></a>
+    <div class="account-header-actions">
+      <a class="account-home-button" href="/" aria-label="Retour à l’accueil"><span aria-hidden="true">←</span> Accueil</a>
+      <a class="quiet-link" href="/game.html">Jouer en solo <span aria-hidden="true">↗</span></a>
+    </div>
   </header>
   <main class="page account-page">
     <div class="page-heading"><div><p class="eyebrow">Votre cercle de jeu</p><h1>Jouez ensemble.</h1></div><p class="heading-note">Créez un compte, retrouvez vos amis et lancez une partie.</p></div>

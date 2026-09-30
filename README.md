@@ -9,7 +9,7 @@ Ouvrez `/account.html` pour créer un compte ou vous connecter. Les pseudos sont
 ## Docker / VPS
 `docker compose up -d --build`; copiez `.env.example` vers `.env` puis remplacez les valeurs de démonstration, en particulier `SESSION_SECRET` et `POSTGRES_PASSWORD`. Placez Nginx devant l'app, proxifiez `/socket.io/` avec `proxy_http_version 1.1`, `Upgrade` et `Connection`; activez HTTPS via Certbot/Let's Encrypt. Pour mettre à jour: sauvegarder PostgreSQL (`pg_dump`), `git pull`, `docker compose up -d --build`. Le volume `pgdata` conserve les données.
 
-Variables: `PORT`, `DATABASE_URL`, `SESSION_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. Sans SMTP en développement, les codes sont affichés dans les logs.
+Variables: `PORT`, `DATABASE_URL`, `SESSION_SECRET`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`. En production, configurez les cinq variables SMTP dans `.env` pour activer les inscriptions. Sans SMTP en développement, le code de vérification est affiché dans l’interface.
 
 ## Fonctionnement des parties
 Les coups en ligne sont validés par le serveur et réservés aux deux comptes invités. En tour par tour, seul le joueur actif peut poser des tuiles. En simultané, les deux chevalets peuvent jouer sans attendre; les coups concurrents sont validés et enregistrés l'un après l'autre.

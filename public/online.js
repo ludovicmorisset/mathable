@@ -35,9 +35,11 @@
     if(state.gameOver)$('turnLabel').textContent='Partie terminée';
     else if(state.mode==='simultaneous')$('turnLabel').textContent=state.passed?.[state.seat]?'Vous avez passé':'Coups simultanés';
     else $('turnLabel').textContent=state.active===state.seat?'Votre tour':`Tour de ${state.players[state.active]}`;
-    $('gameHelp').textContent=state.mode==='simultaneous'?'Jouez quand vous le souhaitez. Après chaque coup, votre chevalet est complété.':'Posez une ou plusieurs tuiles, puis terminez votre tour.';
+    $('gameHelp').textContent=state.mode==='simultaneous'?'Jouez quand vous le souhaitez. Après chaque coup, votre chevalet est complété.':'Posez une ou plusieurs tuiles, terminez votre tour ou passez votre tour.';
     $('turnButton').textContent=state.mode==='simultaneous'?'Passer':'Terminer mon tour';
     $('turnButton').disabled=state.gameOver||(state.mode==='turn'&&state.active!==state.seat);
+    $('passButton').hidden=state.mode==='simultaneous';
+    $('passButton').disabled=state.gameOver||(state.mode==='turn'&&state.active!==state.seat);
     $('handCount').textContent=`(${state.hands[state.seat].length}/7)`;
     renderHand();renderBoard();
   }
@@ -75,6 +77,7 @@
   }
 
   $('turnButton').onclick=()=>socket.emit(state.mode==='turn'?'game:end-turn':'game:pass',{code});
+  $('passButton').onclick=()=>socket.emit('game:pass',{code});
   socket.on('connect',()=>socket.emit('game:join',{code}));
   socket.on('game:state',next=>{state=next;selected=null;render();status('');});
   socket.on('game:error',error=>status(({partie_introuvable:'Partie introuvable ou accès non autorisé.',partie_terminee:'Cette partie est terminée.',coup_invalide:'Ce coup est invalide ou ce n’est pas votre tour.'})[error.error]||'Action impossible.',true));

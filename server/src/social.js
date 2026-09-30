@@ -16,6 +16,7 @@ function initialGameState(){
     while(hand.length<7&&state.bag.length)hand.push(state.bag.pop());
   }
   state.passed=[false,false];
+  state.rackBonusEarned=[false,false];
   return state;
 }
 
@@ -182,6 +183,10 @@ export function registerGameSockets(io,{pool,sessions}){
       if(!Number.isInteger(value)||!state.hands[seat].includes(value))throw new Error('tuile_invalide');
       const move=applyPlacement(state,seat,Number(payload.r),Number(payload.c),value);
       if(!move.ok)throw new Error('placement_invalide');
+      if(game.mode==='turn'&&move.emptiedHand){
+        state.rackBonusEarned??=[false,false];
+        if(!state.rackBonusEarned[seat]){state.scores[seat]+=50;state.rackBonusEarned[seat]=true;}
+      }
       state.passed=[false,false];
       if(game.mode==='simultaneous'){
         while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
@@ -194,6 +199,7 @@ export function registerGameSockets(io,{pool,sessions}){
       while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
       state.active=1-seat;
       state.passed=[false,false];
+      state.rackBonusEarned=[false,false];
       if(!state.bag.length&&state.hands[seat].length===0)state.gameOver=true;
     }));
 
@@ -204,6 +210,7 @@ export function registerGameSockets(io,{pool,sessions}){
       if(game.mode==='turn'){
         while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
         state.active=1-seat;
+        state.rackBonusEarned=[false,false];
       }
       if(state.passed.every(Boolean)&&!state.bag.length)state.gameOver=true;
     }));

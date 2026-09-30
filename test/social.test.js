@@ -91,6 +91,26 @@ test('le serveur refuse un coup hors tour et accepte le coup du joueur actif',as
   assert.deepEqual(bob.last('game:state').hands[0],[null]);
 });
 
+test('vider son chevalet rapporte 50 points en mode tour par tour',async()=>{
+  const {game,connect}=fixture();
+  game.state.hands[0]=[3];
+  const alice=connect('player-a');
+  await alice.send('game:join',{code:'ABC123'});
+  await alice.send('game:place',{code:'ABC123',r:6,c:8,v:3});
+  assert.equal(game.state.scores[0],53);
+  assert.equal(game.state.rackBonusEarned[0],true);
+});
+
+test('un joueur peut passer son tour en mode tour par tour',async()=>{
+  const {game,connect}=fixture();
+  const alice=connect('player-a');
+  await alice.send('game:join',{code:'ABC123'});
+  await alice.send('game:pass',{code:'ABC123'});
+  assert.equal(game.state.active,1);
+  assert.equal(game.state.hands[0].length,7);
+  assert.equal(game.state.passed[0],true);
+});
+
 test('les deux sièges peuvent jouer sans attendre en mode simultané',async()=>{
   const {game,connect}=fixture('simultaneous');
   game.state.hands=[[7,5],[3,6]];

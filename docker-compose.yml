@@ -6,6 +6,11 @@ services:
       PORT: "${PORT:-3000}"
       DATABASE_URL: "postgres://${POSTGRES_USER:-mathable}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-mathable}"
       SESSION_SECRET: "${SESSION_SECRET:?Set SESSION_SECRET in .env}"
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM: "${SMTP_FROM:-}"
     ports: ["${PORT:-3000}:${PORT:-3000}"]
     depends_on:
       postgres: {condition: service_healthy}

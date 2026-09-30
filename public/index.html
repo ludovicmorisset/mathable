@@ -5,18 +5,40 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>Mathable · Jouez ensemble</title>
 	<link rel="stylesheet" href="/social.css">
+<style>
+	.home-page{min-height:100vh;background-color:#f3f6f5;background-image:repeating-linear-gradient(0deg,transparent 0 59px,#172b3a0d 59px 60px),repeating-linear-gradient(90deg,transparent 0 59px,#172b3a0d 59px 60px),linear-gradient(90deg,transparent 49.5%,#1565c014 49.5% 50.5%,transparent 50.5%),linear-gradient(0deg,transparent 49.5%,#1565c014 49.5% 50.5%,transparent 50.5%);background-size:60px 60px,60px 60px,100% 100%,100% 100%}
+	.home-page:before{position:fixed;inset:0;z-index:0;background:linear-gradient(90deg,#f3f6f5f5 0%,#f3f6f5c9 30%,#f3f6f5c9 70%,#f3f6f5f5 100%);content:'';pointer-events:none}
+	.home-page .topbar,.home-main{position:relative;z-index:1}
+	.home-main{width:min(920px,calc(100% - 40px));min-height:calc(100svh - 68px);margin:auto;display:grid;align-content:center;padding:55px 0 85px}
+	.home-intro{text-align:center;animation:home-arrive .55s ease-out both}
+	.home-kicker{margin:0 0 15px;color:var(--green);font-size:12px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+	.home-title{margin:0;color:var(--ink);font:600 68px/1 'Space Grotesk',sans-serif;letter-spacing:0}
+	.home-subtitle{margin:17px 0 0;color:var(--muted);font-size:17px;line-height:1.5}
+	.home-options{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:56px auto 0;border-top:1px solid #172b3a30;border-bottom:1px solid #172b3a30;animation:home-arrive .65s .08s ease-out both}
+	.home-option{position:relative;min-height:142px;padding:25px 28px;display:grid;grid-template-columns:44px 1fr 24px;align-items:center;gap:16px;color:var(--ink);text-decoration:none;transition:background-color .18s ease,transform .18s ease}
+	.home-option+.home-option{border-left:1px solid #172b3a30}
+	.home-option:hover{background:#fff9;transform:translateY(-2px)}
+	.home-option:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+	.home-option-mark{width:42px;height:42px;display:grid;place-items:center;background:var(--blue);color:#fff;border-radius:4px;font:600 20px 'Space Grotesk',sans-serif}
+	.home-option:last-child .home-option-mark{background:var(--yellow);color:var(--ink)}
+	.home-option strong,.home-option small{display:block}
+	.home-option strong{font:600 21px 'Space Grotesk',sans-serif}
+	.home-option small{margin-top:5px;color:var(--muted);font-size:13px;line-height:1.4}
+	.home-option-arrow{color:var(--green);font-size:22px}
+	@keyframes home-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+	@media(max-width:600px){.home-main{width:calc(100% - 32px);min-height:calc(100svh - 60px);padding:45px 0 70px}.home-title{font-size:48px}.home-subtitle{font-size:15px}.home-options{grid-template-columns:1fr;margin-top:38px}.home-option{min-height:112px;padding:20px 14px}.home-option+.home-option{border-left:0;border-top:1px solid #172b3a30}.home-option strong{font-size:19px}}
+</style>
 </head>
-<body>
+<body class="home-page">
 	<header class="topbar">
 		<a class="brand" href="/"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>CALCULER · CONNECTER · GAGNER</small></span></a>
-		<a class="quiet-link" href="/game.html">Jouer en solo <span aria-hidden="true">↗</span></a>
 	</header>
-	<main class="page account-page">
-		<div class="page-heading"><div><p class="eyebrow">Le plateau vous attend</p><h1>Jouez ensemble.</h1></div><p class="heading-note">Créez votre compte, retrouvez vos amis et lancez une partie de Mathable en ligne.</p></div>
-		<section class="auth-layout">
-			<div class="auth-intro"><span class="intro-number">MATHABLE EN LIGNE</span><h2>À chacun son chevalet. À vous les calculs.</h2><p>Invitez un ami pour jouer chacun de votre côté, en simultané ou à tour de rôle.</p></div>
-			<div class="auth-panel" style="display:flex;flex-direction:column;justify-content:center;gap:14px"><a class="button primary" href="/account.html">Créer un compte ou se connecter <span aria-hidden="true">→</span></a><a class="button subtle" href="/game.html">Jouer en solo</a></div>
-		</section>
+	<main class="home-main">
+		<div class="home-intro"><p class="home-kicker">Le plateau est prêt</p><h1 class="home-title">À vous de jouer.</h1><p class="home-subtitle">Choisissez votre prochaine partie.</p></div>
+		<nav class="home-options" aria-label="Choisir un mode de jeu">
+			<a class="home-option" href="/game.html"><span class="home-option-mark" aria-hidden="true">1P</span><span><strong>Partie solo</strong><small>Jouez contre l’ordinateur ou à deux sur le même écran.</small></span><span class="home-option-arrow" aria-hidden="true">→</span></a>
+			<a class="home-option" href="/account.html?intent=duel"><span class="home-option-mark" aria-hidden="true">2P</span><span><strong>Duel en ligne</strong><small>Connectez-vous ou créez un compte pour défier un ami.</small></span><span class="home-option-arrow" aria-hidden="true">→</span></a>
+		</nav>
 	</main>
 </body>
 </html>
