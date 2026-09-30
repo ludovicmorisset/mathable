@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Partie en ligne · Mathable</title>
+  <link rel="stylesheet" href="/social.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/online.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/account.html"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>PARTIE EN LIGNE</small></span></a>
+    <a class="quiet-link" href="/account.html">Compte et amis <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="page online-page">
+    <div class="online-heading"><div><p class="eyebrow">Partie entre amis</p><h1 id="gameTitle">Connexion à la partie…</h1></div><div class="online-meta"><span class="code-label">Code <strong id="gameCode">······</strong></span><span id="turnLabel" class="turn-label">Connexion…</span></div></div>
+    <p id="onlineStatus" class="online-status" role="status" aria-live="polite"></p>
+    <div class="online-layout">
+      <section class="online-board-panel"><div class="online-board-title"><h2>Plateau · 14 × 14</h2><span id="bagLabel" class="eyebrow">Sac · —</span></div><div id="onlineBoard" class="online-board" role="grid" aria-label="Plateau de Mathable"></div></section>
+      <aside class="online-side">
+        <section class="online-panel"><h2>Scores</h2><div class="online-scores"><div id="score0" class="score-box"><span id="name0">Joueur 1</span><strong id="points0">0</strong></div><div id="score1" class="score-box"><span id="name1">Joueur 2</span><strong id="points1">0</strong></div></div></section>
+        <section class="online-panel online-hand-panel"><h2>Votre chevalet <span id="handCount"></span></h2><div id="onlineHand" class="online-hand"></div><div class="online-actions"><button id="turnButton" class="button primary" type="button">Terminer mon tour</button><a class="button subtle" href="/account.html">Quitter la partie</a></div><p id="gameHelp" class="online-help"></p></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>

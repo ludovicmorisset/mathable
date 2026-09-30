@@ -3,15 +3,24 @@ services:
     build: .
     environment:
       NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgres://mathable:change-me@postgres:5432/mathable
-      SESSION_SECRET: change-me
-    ports: ["3000:3000"]
+      PORT: "${PORT:-3000}"
+      DATABASE_URL: "postgres://${POSTGRES_USER:-mathable}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-mathable}"
+      SESSION_SECRET: "${SESSION_SECRET:?Set SESSION_SECRET in .env}"
+    ports: ["${PORT:-3000}:${PORT:-3000}"]
     depends_on:
       postgres: {condition: service_healthy}
   postgres:
     image: postgres:16-alpine
-    environment: {POSTGRES_USER: mathable, POSTGRES_PASSWORD: change-me, POSTGRES_DB: mathable}
-    volumes: [pgdata:/var/lib/postgresql/data]
-    healthcheck: {test: [CMD-SHELL, pg_isready -U mathable -d mathable], interval: 5s, timeout: 5s, retries: 10}
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-mathable}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me}"
+      POSTGRES_DB: "${POSTGRES_DB:-mathable}"
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+      interval: 5s
+      timeout: 5s
+      retries: 10
 volumes: {pgdata: {}}

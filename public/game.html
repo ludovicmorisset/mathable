@@ -56,6 +56,13 @@
 .cell.hint{animation:mathableHint 850ms ease-in-out infinite alternate;box-shadow:0 0 0 3px #00a878,0 0 18px #00a878aa;}
 @keyframes mathableHint{to{transform:scale(1.08);filter:brightness(1.12);}}
 .cell.ai-last{outline:3px solid var(--mathable-orange);box-shadow:0 0 0 4px #ffcc80,0 0 16px #ef6c0088;}
+.board{grid-template-columns:repeat(14,minmax(0,1fr));grid-template-rows:repeat(14,minmax(0,1fr));aspect-ratio:1;}
+.hand{min-width:0;min-height:0;grid-template-columns:repeat(7,minmax(0,1fr));}
+.hand-tile{width:100%;min-width:0;}
+@media(max-width:510px){.side{display:flex;flex-direction:column;min-width:0}.side .panel{width:100%;min-width:0}}
+@media(max-width:360px){.appbar{gap:6px}.app-actions{min-width:0;gap:3px}.select-wrap select{max-width:112px;padding:9px 26px 9px 8px;font-size:12px}.app-actions #newTop{padding:9px 8px!important}}
+@media(min-width:801px){.main{padding-top:clamp(8px,1.5vh,18px);padding-bottom:14px}.topline{margin-bottom:clamp(8px,1.2vh,14px)}.layout{grid-template-columns:minmax(0,1fr) 320px;gap:16px}.board-card{min-width:0;padding:clamp(8px,1vw,14px)}.board{width:min(100%,calc(100svh - 250px));margin-inline:auto}.side{gap:12px}}
+@media(max-height:650px) and (min-width:801px){.board{width:min(100%,calc(100svh - 220px))}.appbar{height:58px}.main{padding-top:8px}}
 </style>
 </head>
 <body>

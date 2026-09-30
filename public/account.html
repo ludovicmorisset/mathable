@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Compte et amis · Mathable</title>
+  <link rel="stylesheet" href="/social.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/account.html"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>COMPTES ET PARTIES</small></span></a>
+    <a class="quiet-link" href="/game.html">Jouer en solo <span aria-hidden="true">↗</span></a>
+  </header>
+  <main class="page account-page">
+    <div class="page-heading"><div><p class="eyebrow">Votre cercle de jeu</p><h1>Jouez ensemble.</h1></div><p class="heading-note">Créez un compte, retrouvez vos amis et lancez une partie.</p></div>
+    <p id="notice" class="notice" role="status" aria-live="polite"></p>
+
+    <section id="authView" class="auth-layout" aria-label="Connexion et inscription">
+      <div class="auth-intro"><span class="intro-number">01</span><h2>Une partie commence par un pseudo.</h2><p>Invitez vos amis par leur nom de joueur et retrouvez vos parties depuis n’importe quel écran.</p></div>
+      <div class="auth-panel">
+        <div class="tabs" role="tablist"><button class="tab active" id="loginTab" type="button" role="tab" aria-selected="true">Connexion</button><button class="tab" id="registerTab" type="button" role="tab" aria-selected="false">Créer un compte</button></div>
+        <form id="loginForm" class="form-stack">
+          <label>E-mail<input name="email" type="email" autocomplete="email" required></label>
+          <label>Mot de passe<input name="password" type="password" autocomplete="current-password" required></label>
+          <button class="button primary" type="submit">Se connecter <span aria-hidden="true">→</span></button>
+        </form>
+        <form id="registerForm" class="form-stack" hidden>
+          <label>Pseudo<input name="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]{3,20}" autocomplete="username" required><small>3 à 20 lettres, chiffres ou _</small></label>
+          <label>E-mail<input name="email" type="email" autocomplete="email" required></label>
+          <label>Mot de passe<input name="password" type="password" minlength="10" autocomplete="new-password" required><small>10 caractères minimum, avec une majuscule, une minuscule et un chiffre</small></label>
+          <button class="button primary" type="submit">Créer mon compte <span aria-hidden="true">→</span></button>
+        </form>
+        <form id="verifyForm" class="form-stack" hidden>
+          <p>Entrez le code à six chiffres envoyé à votre adresse e-mail.</p>
+          <label>Code de vérification<input name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>
+          <button class="button primary" type="submit">Vérifier mon adresse</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="socialView" hidden>
+      <div class="social-heading"><div><p class="eyebrow">Connecté en tant que</p><h2 id="welcomeName"></h2></div><button id="logoutButton" class="button subtle" type="button">Déconnexion</button></div>
+      <div class="social-grid">
+        <section class="section-block friends-block"><div class="section-title"><span>02</span><h2>Amis</h2></div>
+          <form id="friendForm" class="inline-form"><label class="sr-only" for="friendUsername">Pseudo de votre ami</label><input id="friendUsername" name="username" placeholder="Ajouter un ami par son pseudo" minlength="3" required><button class="button primary" type="submit" aria-label="Envoyer une demande d’ami">Ajouter</button></form>
+          <div id="friendsList" class="list-stack"></div>
+        </section>
+        <section class="section-block game-block"><div class="section-title"><span>03</span><h2>Nouvelle partie</h2></div>
+          <form id="createGameForm" class="form-stack compact"><label>Jouer avec<select id="friendSelect" name="friend" required><option value="">Choisir un ami</option></select></label>
+            <label>Rythme<select name="mode"><option value="turn">Tour par tour</option><option value="simultaneous">Coups simultanés</option></select></label>
+            <button class="button primary" type="submit">Créer une invitation <span aria-hidden="true">→</span></button>
+          </form>
+          <form id="joinGameForm" class="inline-form join-form"><label class="sr-only" for="joinCode">Code d’invitation</label><input id="joinCode" name="code" placeholder="Code d’invitation" maxlength="6" required><button class="button subtle" type="submit">Rejoindre</button></form>
+        </section>
+        <section class="section-block recent-block"><div class="section-title"><span>04</span><h2>Parties récentes</h2></div><div id="gamesList" class="list-stack"></div></section>
+      </div>
+    </section>
+  </main>
+  <script src="/account.js" defer></script>
+</body>
+</html>

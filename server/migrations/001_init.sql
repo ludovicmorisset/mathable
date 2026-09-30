@@ -1,5 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,verified BOOLEAN NOT NULL DEFAULT FALSE,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+UPDATE users SET username=left(lower(regexp_replace(split_part(email,'@',1),'[^a-z0-9_]+','','g')),11)||'_'||substr(replace(id::text,'-',''),1,8) WHERE username IS NULL;
+ALTER TABLE users ALTER COLUMN username SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_idx ON users(lower(username));
 CREATE TABLE IF NOT EXISTS verification_codes(id BIGSERIAL PRIMARY KEY,user_id UUID REFERENCES users(id) ON DELETE CASCADE,purpose TEXT NOT NULL,code_hash TEXT NOT NULL,expires_at TIMESTAMPTZ NOT NULL,attempts INT NOT NULL DEFAULT 0,used_at TIMESTAMPTZ);
 CREATE TABLE IF NOT EXISTS games(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),code TEXT UNIQUE NOT NULL,state JSONB NOT NULL,created_by UUID REFERENCES users(id),created_at TIMESTAMPTZ NOT NULL DEFAULT now(),updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+ALTER TABLE games ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'turn';
 CREATE TABLE IF NOT EXISTS game_players(game_id UUID REFERENCES games(id) ON DELETE CASCADE,user_id UUID REFERENCES users(id),seat INT NOT NULL,PRIMARY KEY(game_id,user_id));
+CREATE UNIQUE INDEX IF NOT EXISTS game_players_seat_idx ON game_players(game_id,seat);
+CREATE TABLE IF NOT EXISTS friendships(user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,friend_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,requested_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,status TEXT NOT NULL CHECK(status IN ('pending','accepted')),created_at TIMESTAMPTZ NOT NULL DEFAULT now(),PRIMARY KEY(user_id,friend_id),CHECK(user_id<>friend_id));
