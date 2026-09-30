@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {validPassword,digest} from '../server/src/auth.js';test('politique mot de passe',()=>{assert.equal(validPassword('Mathable2026!'),true);assert.equal(validPassword('court'),false)});test('digest déterministe',()=>assert.equal(digest('123456'),digest('123456')));
