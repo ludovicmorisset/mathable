@@ -16,6 +16,10 @@ function initialGameState(){
     while(hand.length<7&&state.bag.length)hand.push(state.bag.pop());
   }
   state.passed=[false,false];
+  state.moves=[];
+  state.turnMoves=[];
+  state.previousTurnMoves=[];
+  state.turnNumber=0;
   state.rackBonusEarned=[false,false];
   return state;
 }
@@ -72,7 +76,14 @@ export function registerSocialApi(app,{pool,auth}){
 
   app.get('/api/games',auth,async(req,res)=>{
     const result=await pool.query(`SELECT g.id,g.code,g.mode,g.updated_at,
-      array_agg(u.username ORDER BY gp.seat) AS players
+      g.created_at,
+      array_agg(u.username ORDER BY gp.seat) AS players,
+      max(COALESCE((g.state->'scores'->>gp.seat)::INT,0)) FILTER (WHERE gp.user_id=$1) AS my_score,
+      max(COALESCE((g.state->'scores'->>gp.seat)::INT,0)) FILTER (WHERE gp.user_id<>$1) AS opponent_score,
+      max(u.username) FILTER (WHERE gp.user_id<>$1) AS opponent,
+      bool_or(g.mode='turn' AND gp.user_id=$1 AND gp.seat=(g.state->>'active')::INT AND (g.state->>'gameOver') IS DISTINCT FROM 'true') AS my_turn,
+      max(u.username) FILTER (WHERE g.mode='turn' AND gp.seat=(g.state->>'active')::INT AND (g.state->>'gameOver') IS DISTINCT FROM 'true') AS active_player,
+      bool_or(COALESCE((g.state->>'gameOver')::BOOLEAN,FALSE)) AS game_over
       FROM games g JOIN game_players gp ON gp.game_id=g.id JOIN users u ON u.id=gp.user_id
       WHERE g.id IN (SELECT game_id FROM game_players WHERE user_id=$1)
       GROUP BY g.id ORDER BY g.updated_at DESC`,[req.user.id]);
@@ -111,13 +122,13 @@ export function registerSocialApi(app,{pool,auth}){
   });
 }
 
-export function registerGameSockets(io,{pool,sessions}){
+export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}){
   io.use((socket,next)=>{
-    const sid=cookieValue(socket.handshake.headers.cookie,'mathable_session');
-    const user=sid&&sessions.get(sid);
-    if(!user)return next(new Error('authentification_requise'));
-    socket.data.userId=user.id;
-    next();
+    const sessionId=cookieValue(socket.handshake.headers.cookie,'mathable_session');
+    const cached=sessionId&&sessions.get(sessionId);
+    if(cached&&(!cached.expiresAt||cached.expiresAt>Date.now())){socket.data.userId=cached.id;return next()}
+    if(!sessionId||!resolveSession)return next(new Error('authentification_requise'));
+    resolveSession(sessionId).then(user=>{if(!user)return next(new Error('authentification_requise'));socket.data.userId=user.id;next()}).catch(next);
   });
 
   async function sendState(gameId){
@@ -156,6 +167,7 @@ export function registerGameSockets(io,{pool,sessions}){
       const code=String(payload?.code||'').toUpperCase();
       const client=await pool.connect();
       let gameId;
+      let nextTurnNotification=null;
       try{
         await client.query('BEGIN');
         const result=await client.query(`SELECT g.id,g.code,g.mode,g.state,gp.seat FROM games g
@@ -165,30 +177,46 @@ export function registerGameSockets(io,{pool,sessions}){
         gameId=game.id;
         const state=game.state;
         const seat=game.seat;
+        const previousActive=state.active;
         if(state.gameOver)throw new Error('partie_terminee');
         await action({client,game,state,seat});
+        if(game.mode==='turn'&&!state.gameOver&&state.active!==previousActive){
+          const nextPlayer=await client.query('SELECT user_id FROM game_players WHERE game_id=$1 AND seat=$2',[gameId,state.active]);
+          if(nextPlayer.rowCount)nextTurnNotification={gameId,userId:nextPlayer.rows[0].user_id};
+        }
         await client.query('UPDATE games SET state=$1,updated_at=now() WHERE id=$2',[JSON.stringify(state),gameId]);
         await client.query('COMMIT');
       }catch(error){
         await client.query('ROLLBACK');
-        socket.emit('game:error',{error:error.message==='partie_introuvable'?error.message:'coup_invalide'});
+        const publicError=['partie_introuvable','echange_invalide'].includes(error.message)?error.message:'coup_invalide';
+        socket.emit('game:error',{error:publicError});
         return;
       }finally{client.release();}
       await sendState(gameId);
+      if(nextTurnNotification&&notifyTurn)Promise.resolve().then(()=>notifyTurn(nextTurnNotification)).catch(error=>console.error('Notification de tour impossible:',error.message));
     }
 
     socket.on('game:place',payload=>updateGame(payload,async({game,state,seat})=>{
       if(game.mode==='turn'&&state.active!==seat)throw new Error('tour_invalide');
       const value=Number(payload?.v);
       if(!Number.isInteger(value)||!state.hands[seat].includes(value))throw new Error('tuile_invalide');
-      const move=applyPlacement(state,seat,Number(payload.r),Number(payload.c),value);
+      const row=Number(payload.r),col=Number(payload.c);
+      const move=applyPlacement(state,seat,row,col,value);
       if(!move.ok)throw new Error('placement_invalide');
+      state.moves??=[];
+      state.turnMoves??=[];
+      const playedMove={id:state.moves.length,turn:state.turnNumber??0,seat,r:row,c:col,v:value,points:move.points};
+      state.moves.push(playedMove);
+      state.turnMoves.push(playedMove);
       if(game.mode==='turn'&&move.emptiedHand){
         state.rackBonusEarned??=[false,false];
         if(!state.rackBonusEarned[seat]){state.scores[seat]+=50;state.rackBonusEarned[seat]=true;}
       }
       state.passed=[false,false];
       if(game.mode==='simultaneous'){
+        state.previousTurnMoves=[playedMove];
+        state.turnMoves=[];
+        state.turnNumber=(state.turnNumber??0)+1;
         while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
       }
       if(!state.bag.length&&!state.hands[seat].length)state.gameOver=true;
@@ -196,6 +224,9 @@ export function registerGameSockets(io,{pool,sessions}){
 
     socket.on('game:end-turn',payload=>updateGame(payload,async({game,state,seat})=>{
       if(game.mode!=='turn'||state.active!==seat)throw new Error('tour_invalide');
+      state.previousTurnMoves=state.turnMoves??[];
+      state.turnMoves=[];
+      state.turnNumber=(state.turnNumber??0)+1;
       while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
       state.active=1-seat;
       state.passed=[false,false];
@@ -208,11 +239,47 @@ export function registerGameSockets(io,{pool,sessions}){
       state.passed??=[false,false];
       state.passed[seat]=true;
       if(game.mode==='turn'){
+        state.previousTurnMoves=state.turnMoves??[];
+        state.turnMoves=[];
+        state.turnNumber=(state.turnNumber??0)+1;
         while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
         state.active=1-seat;
         state.rackBonusEarned=[false,false];
+      }else{
+        state.previousTurnMoves=[];
+        state.turnNumber=(state.turnNumber??0)+1;
       }
       if(state.passed.every(Boolean)&&!state.bag.length)state.gameOver=true;
+    }));
+
+    socket.on('game:exchange',payload=>updateGame(payload,async({game,state,seat})=>{
+      if(game.mode==='turn'&&(state.active!==seat||(state.turnMoves??[]).length))throw new Error('echange_invalide');
+      const values=Array.isArray(payload?.values)?payload.values.map(Number):[];
+      if(!values.length||values.length>7||values.length>state.bag.length||values.some(value=>!Number.isInteger(value)))throw new Error('echange_invalide');
+      const hand=[...state.hands[seat]];
+      for(const value of values){const index=hand.indexOf(value);if(index<0)throw new Error('echange_invalide');hand.splice(index,1)}
+      state.hands[seat]=hand;
+      state.bag.push(...values);
+      shuffle(state.bag);
+      for(let index=0;index<values.length;index++)state.hands[seat].push(state.bag.pop());
+      state.previousTurnMoves=[];
+      state.turnMoves=[];
+      state.turnNumber=(state.turnNumber??0)+1;
+      if(game.mode==='turn'){
+        while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
+        state.active=1-seat;
+        state.passed=[false,false];
+        state.rackBonusEarned=[false,false];
+      }else{
+        state.passed??=[false,false];
+        state.passed[seat]=true;
+      }
+    }));
+
+    socket.on('game:abandon',payload=>updateGame(payload,async({state})=>{
+      for(let seat=0;seat<state.hands.length;seat++)state.scores[seat]-=state.hands[seat].reduce((total,value)=>total+value,0);
+      state.gameOver=true;
+      state.abandoned=true;
     }));
   });
 }

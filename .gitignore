@@ -1,3 +1,30 @@
 node_modules/
-.env
 .DS_Store
+
+# Local environment files; keep the sanitized template tracked.
+.env
+.env.*
+!/.env.example
+
+# Private credentials and keys.
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+credentials*.json
+service-account*.json
+/secrets/
+**/secrets/
+
+# Local data, backups, uploads, and logs.
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.log
+/data/
+/backups/
+**/backups/
+/uploads/
+**/uploads/

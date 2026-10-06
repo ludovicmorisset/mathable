@@ -4,10 +4,24 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<title>Mathable · Jouez ensemble</title>
+	<meta name="description" content="Le jeu de tuiles qui stimule et renforce vos aptitudes en calcul. Jouez en solo ou défiez un ami en ligne.">
+	<link rel="icon" type="image/svg+xml" href="/mathable_logo.svg">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="Mathable">
+	<meta property="og:title" content="Mathable · Jouez ensemble">
+	<meta property="og:description" content="Le jeu de tuiles qui stimule et renforce vos aptitudes en calcul. Jouez en solo ou défiez un ami en ligne.">
+	<meta property="og:url" content="https://mathable.tessirom.fr/">
+	<meta property="og:image" content="https://mathable.tessirom.fr/share/mathable-og.png">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta property="og:image:alt" content="Mathable, le jeu de calcul sur un plateau de tuiles">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Mathable · Jouez ensemble">
+	<meta name="twitter:description" content="Le jeu de tuiles qui stimule et renforce vos aptitudes en calcul.">
+	<meta name="twitter:image" content="https://mathable.tessirom.fr/share/mathable-og.png">
 	<link rel="stylesheet" href="/social.css">
 <style>
 	.home-page{min-height:100vh;background-color:#f3f6f5;background-image:repeating-linear-gradient(0deg,transparent 0 59px,#172b3a0d 59px 60px),repeating-linear-gradient(90deg,transparent 0 59px,#172b3a0d 59px 60px),linear-gradient(90deg,transparent 49.5%,#1565c014 49.5% 50.5%,transparent 50.5%),linear-gradient(0deg,transparent 49.5%,#1565c014 49.5% 50.5%,transparent 50.5%);background-size:60px 60px,60px 60px,100% 100%,100% 100%}
-	.home-page:before{position:fixed;inset:0;z-index:0;background:linear-gradient(90deg,#f3f6f5f5 0%,#f3f6f5c9 30%,#f3f6f5c9 70%,#f3f6f5f5 100%);content:'';pointer-events:none}
 	.home-page .topbar,.home-main{position:relative;z-index:1}
 	.home-main{width:min(920px,calc(100% - 40px));min-height:calc(100svh - 68px);margin:auto;display:grid;align-content:center;padding:55px 0 85px}
 	.home-intro{text-align:center;animation:home-arrive .55s ease-out both}
@@ -28,13 +42,14 @@
 	@keyframes home-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 	@media(max-width:600px){.home-main{width:calc(100% - 32px);min-height:calc(100svh - 60px);padding:45px 0 70px}.home-title{font-size:48px}.home-subtitle{font-size:15px}.home-options{grid-template-columns:1fr;margin-top:38px}.home-option{min-height:112px;padding:20px 14px}.home-option+.home-option{border-left:0;border-top:1px solid #172b3a30}.home-option strong{font-size:19px}}
 </style>
+<link rel="stylesheet" href="/site-wallpaper.css">
 </head>
 <body class="home-page">
 	<header class="topbar">
-		<a class="brand" href="/"><span class="brand-mark">Σ</span><span><strong>MATHABLE</strong><small>CALCULER · CONNECTER · GAGNER</small></span></a>
+		<a class="brand" href="/"><img class="brand-logo" src="/mathable_logo.svg" alt=""><span><strong>MATHABLE</strong><small>CALCULER · CONNECTER · GAGNER</small></span></a>
 	</header>
 	<main class="home-main">
-		<div class="home-intro"><p class="home-kicker">Le plateau est prêt</p><h1 class="home-title">À vous de jouer.</h1><p class="home-subtitle">Choisissez votre prochaine partie.</p></div>
+		<div class="home-intro"><p class="home-kicker">Le plateau est prêt</p><h1 class="home-title">À vous de jouer.</h1><p class="home-subtitle">Le jeu de tuiles qui stimule et renforce vos aptitudes en calcul</p></div>
 		<nav class="home-options" aria-label="Choisir un mode de jeu">
 			<a class="home-option" href="/game.html"><span class="home-option-mark" aria-hidden="true">1P</span><span><strong>Partie solo</strong><small>Jouez contre l’ordinateur ou à deux sur le même écran.</small></span><span class="home-option-arrow" aria-hidden="true">→</span></a>
 			<a class="home-option" href="/account.html?intent=duel"><span class="home-option-mark" aria-hidden="true">2P</span><span><strong>Duel en ligne</strong><small>Connectez-vous ou créez un compte pour défier un ami.</small></span><span class="home-option-arrow" aria-hidden="true">→</span></a>

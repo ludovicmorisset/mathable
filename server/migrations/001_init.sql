@@ -1,5 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS users(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,verified BOOLEAN NOT NULL DEFAULT FALSE,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS auth_sessions(session_hash TEXT PRIMARY KEY,user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS auth_sessions_expires_at_idx ON auth_sessions(expires_at);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
 UPDATE users SET username=left(lower(regexp_replace(split_part(email,'@',1),'[^a-z0-9_]+','','g')),11)||'_'||substr(replace(id::text,'-',''),1,8) WHERE username IS NULL;
 ALTER TABLE users ALTER COLUMN username SET NOT NULL;
