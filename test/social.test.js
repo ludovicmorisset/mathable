@@ -124,12 +124,42 @@ test('un joueur peut passer son tour en mode tour par tour',async()=>{
   assert.equal(game.state.passed[0],true);
 });
 
-test('abandonner termine la partie et déduit les tuiles restantes des deux scores',async()=>{
+test('une demande d’abandon attend la réponse de l’adversaire',async()=>{
   const {game,connect}=fixture();
   game.state.scores=[24,31];
   const alice=connect('player-a');
+  const bob=connect('player-b');
   await alice.send('game:join',{code:'ABC123'});
+  await bob.send('game:join',{code:'ABC123'});
   await alice.send('game:abandon',{code:'ABC123'});
+  assert.equal(game.state.gameOver,false);
+  assert.equal(game.state.abandoned,undefined);
+  assert.equal(game.state.abandonRequest.seat,0);
+  assert.equal(alice.last('game:state').abandonRequest.seat,0);
+  assert.equal(bob.last('game:state').abandonRequest.seat,0);
+});
+
+test('l’adversaire peut refuser une demande d’abandon',async()=>{
+  const {game,connect}=fixture();
+  const alice=connect('player-a');
+  const bob=connect('player-b');
+  await alice.send('game:join',{code:'ABC123'});
+  await bob.send('game:join',{code:'ABC123'});
+  await alice.send('game:abandon',{code:'ABC123'});
+  await bob.send('game:abandon-response',{code:'ABC123',accept:false});
+  assert.equal(game.state.gameOver,false);
+  assert.equal(game.state.abandonRequest,null);
+});
+
+test('accepter un abandon termine la partie et déduit les tuiles restantes',async()=>{
+  const {game,connect}=fixture();
+  game.state.scores=[24,31];
+  const alice=connect('player-a');
+  const bob=connect('player-b');
+  await alice.send('game:join',{code:'ABC123'});
+  await bob.send('game:join',{code:'ABC123'});
+  await alice.send('game:abandon',{code:'ABC123'});
+  await bob.send('game:abandon-response',{code:'ABC123',accept:true});
   assert.equal(game.state.gameOver,true);
   assert.equal(game.state.abandoned,true);
   assert.deepEqual(game.state.scores,[16,17]);

@@ -29,7 +29,7 @@ function cookieValue(cookie,name){
 }
 
 function publicState(state,seat,mode,code,players){
-  return {...state,bag:[],bagCount:state.bag.length,hands:state.hands.map((hand,index)=>index===seat?hand:hand.map(()=>null)),mode,code,seat,players};
+  return {...state,bag:[],bagCount:state.bag.length,hands:state.hands.map((hand,index)=>index===seat?hand:hand.map(()=>null)),mode,code,seat,players,abandonRequest:state.abandonRequest??null};
 }
 
 export function registerSocialApi(app,{pool,auth}){
@@ -276,8 +276,17 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
       }
     }));
 
-    socket.on('game:abandon',payload=>updateGame(payload,async({state})=>{
-      for(let seat=0;seat<state.hands.length;seat++)state.scores[seat]-=state.hands[seat].reduce((total,value)=>total+value,0);
+    socket.on('game:abandon',payload=>updateGame(payload,async({state,seat})=>{
+      if(state.abandonRequest)throw new Error('abandon_invalide');
+      state.abandonRequest={id:crypto.randomBytes(8).toString('hex'),seat};
+    }));
+
+    socket.on('game:abandon-response',payload=>updateGame(payload,async({state,seat})=>{
+      const request=state.abandonRequest;
+      if(!request||request.seat===seat)throw new Error('abandon_invalide');
+      state.abandonRequest=null;
+      if(payload?.accept!==true)return;
+      for(let player=0;player<state.hands.length;player++)state.scores[player]-=state.hands[player].reduce((total,value)=>total+value,0);
       state.gameOver=true;
       state.abandoned=true;
     }));

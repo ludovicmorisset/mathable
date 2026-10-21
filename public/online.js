@@ -25,6 +25,8 @@
   let replayTimer=null;
   let activeOpponentMove=null;
   let replayInitialized=false;
+  let handledAbandonRequestId=null;
+  let pendingOwnAbandonId=null;
   const socket=io({autoConnect:false});
 
   function squareType(row,col){
@@ -173,7 +175,7 @@
 
   $('turnButton').onclick=()=>socket.emit(state.mode==='turn'?'game:end-turn':'game:pass',{code});
   $('passButton').onclick=()=>socket.emit('game:pass',{code});
-  $('abandonButton').onclick=()=>{if(window.confirm('Abandonner cette partie ? Les tuiles restantes seront déduites des scores des deux joueurs.'))socket.emit('game:abandon',{code});};
+  $('abandonButton').onclick=()=>{if(window.confirm('Demander à votre adversaire de terminer la partie ?'))socket.emit('game:abandon',{code});};
   $('exchangeButton').onclick=()=>{
     if(!exchangeMode){exchangeMode=true;selected=null;selectedForExchange.clear();render();status('Choisissez une ou plusieurs tuiles à échanger.');return;}
     if(!selectedForExchange.size){exchangeMode=false;render();status('');return;}
@@ -183,7 +185,27 @@
     exchangeMode=false;selectedForExchange.clear();selected=null;render();status('');
   };
   socket.on('connect',()=>socket.emit('game:join',{code}));
-  socket.on('game:state',next=>{state=next;selected=null;exchangeMode=false;selectedForExchange.clear();render();status('');queueOpponentMoves(next);});
+  socket.on('game:state',next=>{
+    const previousOwnRequest=pendingOwnAbandonId;
+    state=next;selected=null;exchangeMode=false;selectedForExchange.clear();render();
+    const request=next.abandonRequest;
+    if(request?.seat===next.seat){
+      pendingOwnAbandonId=request.id;
+      status('Demande envoyée à votre adversaire.');
+    }else if(!request&&previousOwnRequest&&!next.gameOver){
+      pendingOwnAbandonId=null;
+      status('Votre adversaire a refusé la demande.');
+    }else if(request&&request.seat!==next.seat&&request.id!==handledAbandonRequestId){
+      handledAbandonRequestId=request.id;
+      const accepted=window.confirm(`${next.players[request.seat]} souhaite terminer la partie. Acceptez-vous l’abandon ?`);
+      socket.emit('game:abandon-response',{code,accept:accepted});
+    }else if(!request){
+      handledAbandonRequestId=null;
+      if(next.gameOver)pendingOwnAbandonId=null;
+      else status('');
+    }
+    queueOpponentMoves(next);
+  });
   socket.on('game:error',error=>{render();status(({partie_introuvable:'Partie introuvable ou accès non autorisé.',partie_terminee:'Cette partie est terminée.',coup_invalide:'Action invalide ou ce n’est pas votre tour.',echange_invalide:'Échange impossible. Vérifiez les tuiles sélectionnées et le contenu du sac.'})[error.error]||'Action impossible.',true)});
   socket.on('connect_error',()=>status('Connexion refusée. Connectez-vous avec le compte invité.',true));
 
