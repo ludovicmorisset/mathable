@@ -1,19 +1,43 @@
 node_modules/
 .DS_Store
+.npmrc
+.envrc
+.vscode/
+.idea/
+.DS_Store?
+Thumbs.db
+npm-debug.log*
 
 # Local environment files; keep the sanitized template tracked.
 .env
 .env.*
-!/.env.example
+!.env.example
+!.env.*.example
 
 # Private credentials and keys.
+*.secret
+*.secrets
+*.token
+*.credentials
 *.pem
 *.key
 *.p12
 *.pfx
 *.keystore
+*.jks
+*.crt
+*.cer
+*.pub
+*.asc
+*.gpg
+*.kdbx
+*.tfstate
+*.tfstate.*
+*.envrc
 credentials*.json
 service-account*.json
+id_rsa*
+id_ed25519*
 /secrets/
 **/secrets/
 

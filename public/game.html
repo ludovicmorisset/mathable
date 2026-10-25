@@ -123,7 +123,6 @@ function newGame(){gameToken++;clearTimeout(aiTimer);aiTimer=null;aiBusy=false;a
 $('finish').onclick=()=>finish();$('passTurn').onclick=passTurn;$('exchange').onclick=exchange;$('hintsToggle').onchange=render;$('newTop').onclick=()=>confirmBox('Nouvelle partie ?','La partie actuelle sera remplacée.',newGame,'Recommencer');$('mode').onchange=()=>{ $('p1name').textContent=$('mode').value==='local'?'Joueur 2':'IA';newGame()};$('rules').onclick=()=>confirmBox('Règles express','Posez une tuile v lorsque deux cases alignées sont occupées et qu’une équation donne v. Sur une case opération, seule l’opération indiquée compte. Les multiplicateurs doublent ou triplent les points.',()=>{},'Fermer');init();
 })();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"8607d2a720d14b038279025b2b5a82e5","spa":2}' crossorigin="anonymous"></script>
 <script>
 const homeLink=document.createElement('a');homeLink.className='btn';homeLink.href='/';homeLink.title='Retour à l’accueil';homeLink.setAttribute('aria-label','Retour à l’accueil');homeLink.style.cssText='color:#fff;background:#ffffff20;padding:9px 12px';homeLink.innerHTML='<span class="material-icons-round">home</span>';document.querySelector('.app-actions').prepend(homeLink);
 </script>
