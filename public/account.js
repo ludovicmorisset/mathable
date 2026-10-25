@@ -14,7 +14,8 @@ async function api(path,options={}){
 function message(text,success=false){notice.textContent=text;notice.classList.toggle('success',success);}
 function errorText(error){return ({
   identifiants_invalides:'Adresse e-mail ou mot de passe incorrect.',
-  email_ou_pseudo_deja_utilise_ou_base_indisponible:'Cette adresse ou ce pseudo est déjà utilisé, ou le service est indisponible.',
+  email_ou_pseudo_deja_utilise:'Cette adresse ou ce pseudo est déjà utilisé.',
+  base_indisponible:'Le service est temporairement indisponible. Réessayez plus tard.',
   smtp_requis:'La création de compte nécessite la configuration de l’envoi d’e-mails.',
   smtp_indisponible:'L’e-mail de vérification n’a pas pu être envoyé. Réessayez plus tard.',
   inscription_invalide:'Vérifiez le pseudo, l’adresse e-mail et les critères du mot de passe.',

@@ -6,16 +6,12 @@
   <title>Compte et amis · Mathable</title>
   <link rel="stylesheet" href="/social.css">
   <style>
-    .account-topbar{height:72px;padding:0 clamp(16px,4vw,56px);background:var(--blue);border-bottom:0;box-shadow:0 3px 12px #0d2c5440}
-    .account-topbar .brand{color:#fff}
-    .account-topbar .brand-mark{width:40px;height:40px;border-radius:12px;background:#fff;color:var(--blue);font:700 23px 'Space Grotesk',sans-serif}
-    .account-topbar .brand small{color:#fff;opacity:.75}
-    .account-topbar .quiet-link{color:#fff}
-    .account-topbar .quiet-link span{color:var(--yellow)}
+    .account-topbar{height:72px;padding:0 clamp(16px,4vw,56px);background:#ffffffd9;border-bottom:1px solid #d6e5f3;box-shadow:0 2px 12px #173f6514;backdrop-filter:blur(16px)}
+    .account-topbar .brand-mark{width:40px;height:40px;border-radius:13px;box-shadow:0 3px 8px #1565c033}
     .account-header-actions{display:flex;align-items:center;gap:14px}
-    .account-home-button{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #ffffff66;border-radius:4px;background:#ffffff20;color:#fff;font-size:13px;font-weight:700;text-decoration:none}
-    .account-home-button:hover{background:#ffffff35}
-    @media(max-width:560px){.account-topbar .brand small{display:none}.account-header-actions{gap:9px}.account-home-button{padding:7px 9px;font-size:12px}}
+    .account-home-button{display:inline-flex;align-items:center;gap:7px;padding:10px 15px;border:1px solid #1565c033;border-radius:24px;background:#eaf3ff;color:var(--blue-dark);font-size:13px;font-weight:700;text-decoration:none;transition:background .18s,transform .18s}
+    .account-home-button:hover{background:#d9eaff;transform:translateY(-1px)}
+    @media(max-width:560px){.account-topbar .brand small{display:none}.account-header-actions{gap:9px}.account-home-button{padding:8px 11px;font-size:12px}}
   </style>
 </head>
 <body>
@@ -56,18 +52,18 @@
     <section id="socialView" hidden>
       <div class="social-heading"><div><p class="eyebrow">Connecté en tant que</p><h2 id="welcomeName"></h2></div><button id="logoutButton" class="button subtle" type="button">Déconnexion</button></div>
       <div class="social-grid">
-        <section class="section-block friends-block"><div class="section-title"><span>02</span><h2>Amis</h2></div>
-          <form id="friendForm" class="inline-form"><label class="sr-only" for="friendUsername">Pseudo de votre ami</label><input id="friendUsername" name="username" placeholder="Ajouter un ami par son pseudo" minlength="3" required><button class="button primary" type="submit" aria-label="Envoyer une demande d’ami">Ajouter</button></form>
-          <div id="friendsList" class="list-stack"></div>
-        </section>
-        <section class="section-block game-block"><div class="section-title"><span>03</span><h2>Nouvelle partie</h2></div>
+        <section class="section-block game-block"><div class="section-title"><span aria-hidden="true">01</span><h2>Nouvelle partie</h2></div>
           <form id="createGameForm" class="form-stack compact"><label>Jouer avec<select id="friendSelect" name="friend" required><option value="">Choisir un ami</option></select></label>
             <label>Rythme<select name="mode"><option value="turn">Tour par tour</option><option value="simultaneous">Coups simultanés</option></select></label>
             <button class="button primary" type="submit">Créer une invitation <span aria-hidden="true">→</span></button>
           </form>
           <form id="joinGameForm" class="inline-form join-form"><label class="sr-only" for="joinCode">Code d’invitation</label><input id="joinCode" name="code" placeholder="Code d’invitation" maxlength="6" required><button class="button subtle" type="submit">Rejoindre</button></form>
         </section>
-        <section class="section-block recent-block"><div class="section-title"><span>04</span><h2>Parties récentes</h2></div><div id="gamesList" class="list-stack"></div></section>
+        <section class="section-block friends-block"><div class="section-title"><span aria-hidden="true">02</span><h2>Amis</h2></div>
+          <form id="friendForm" class="inline-form"><label class="sr-only" for="friendUsername">Pseudo de votre ami</label><input id="friendUsername" name="username" placeholder="Ajouter un ami par son pseudo" minlength="3" required><button class="button primary" type="submit" aria-label="Envoyer une demande d’ami">Ajouter</button></form>
+          <div id="friendsList" class="list-stack"></div>
+        </section>
+        <section class="section-block recent-block"><div class="section-title"><span aria-hidden="true">03</span><h2>Parties récentes</h2></div><div id="gamesList" class="list-stack"></div></section>
       </div>
     </section>
   </main>

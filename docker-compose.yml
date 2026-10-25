@@ -1,25 +1,27 @@
 services:
-  app:
+  mathable_app:
     build: .
     environment:
       NODE_ENV: production
-      PORT: "${PORT:-3000}"
+      PORT: "${PORT}"
       DATABASE_URL: "postgres://${POSTGRES_USER:-mathable}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-mathable}"
-      SESSION_SECRET: "${SESSION_SECRET:?Set SESSION_SECRET in .env}"
-      SMTP_HOST: "${SMTP_HOST:-}"
-      SMTP_PORT: "${SMTP_PORT:-587}"
-      SMTP_USER: "${SMTP_USER:-}"
-      SMTP_PASS: "${SMTP_PASS:-}"
-      SMTP_FROM: "${SMTP_FROM:-}"
-    ports: ["${PORT:-3000}:${PORT:-3000}"]
+      SESSION_SECRET: "${SESSION_SECRET}"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASS: "${SMTP_PASS}"
+      SMTP_FROM: "${SMTP_FROM}"
+    ports:
+      - "${PORT}:${PORT}"
     depends_on:
-      postgres: {condition: service_healthy}
-  postgres:
+      mathable_postgres: {condition: service_healthy}
+    container_name: mathable
+  mathable_postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: "${POSTGRES_USER:-mathable}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change-me}"
-      POSTGRES_DB: "${POSTGRES_DB:-mathable}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
       test:
