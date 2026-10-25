@@ -76,18 +76,23 @@
     <section id="socialView" hidden>
       <div class="social-heading"><div><p class="eyebrow">Connecté en tant que</p><h2 id="welcomeName"></h2></div><button id="logoutButton" class="button subtle" type="button">Déconnexion</button></div>
       <div class="social-grid">
-        <section class="section-block friends-block"><div class="section-title"><span>02</span><h2>Amis</h2></div>
-          <form id="friendForm" class="inline-form"><label class="sr-only" for="friendUsername">Pseudo de votre ami</label><input id="friendUsername" name="username" placeholder="Ajouter un ami par son pseudo" minlength="3" required><button class="button primary" type="submit" aria-label="Envoyer une demande d’ami">Ajouter</button></form>
-          <div id="friendsList" class="list-stack"></div>
-        </section>
-        <section class="section-block game-block"><div class="section-title"><span>03</span><h2>Nouvelle partie</h2></div>
+        <section class="section-block game-block"><div class="section-title"><span>01</span><h2>Nouvelle partie</h2></div>
           <form id="createGameForm" class="form-stack compact"><label>Jouer avec<select id="friendSelect" name="friend" required><option value="">Choisir un ami</option></select></label>
             <label>Rythme<select name="mode"><option value="turn">Tour par tour</option><option value="simultaneous">Coups simultanés</option></select></label>
             <button class="button primary" type="submit">Créer une invitation <span aria-hidden="true">→</span></button>
           </form>
           <form id="joinGameForm" class="inline-form join-form"><label class="sr-only" for="joinCode">Code d’invitation</label><input id="joinCode" name="code" placeholder="Code d’invitation" maxlength="6" required><button class="button subtle" type="submit">Rejoindre</button></form>
         </section>
-        <section class="section-block recent-block"><div class="section-title"><span>04</span><h2>Parties récentes</h2></div><div id="gamesList" class="list-stack"></div></section>
+        <section class="section-block friends-block"><div class="section-title"><span>02</span><h2>Amis</h2></div>
+          <form id="friendForm" class="inline-form"><label class="sr-only" for="friendUsername">Pseudo de votre ami</label><input id="friendUsername" name="username" placeholder="Ajouter un ami par son pseudo" minlength="3" required><button class="button primary" type="submit" aria-label="Envoyer une demande d’ami">Ajouter</button></form>
+          <div id="friendsList" class="list-stack"></div>
+        </section>
+        <section class="section-block recent-block"><div class="section-title"><span>03</span><h2>Parties en cours</h2></div><p id="gamesAttention" class="games-attention" role="status" hidden></p><div id="gamesList" class="list-stack"></div></section>
+        <section class="section-block history-block"><div class="section-title"><span>04</span><h2>Historique des parties</h2></div>
+          <div class="history-layout"><div class="history-results"><div class="history-toolbar"><p id="historyCount" class="history-count"></p><label class="sr-only" for="historySearch">Rechercher dans l’historique</label><input id="historySearch" type="search" placeholder="Rechercher un joueur ou un code"></div><div id="historyList" class="list-stack"></div></div>
+            <aside class="history-ranking"><h3>Meilleurs scores</h3><ol id="topScores" class="top-scores"></ol></aside>
+          </div>
+        </section>
       </div>
     </section>
   </main>

@@ -14,6 +14,8 @@ services:
     ports: ["${PORT:-3000}:${PORT:-3000}"]
     depends_on:
       postgres: {condition: service_healthy}
+    networks:
+      - reseau_interne
   postgres:
     image: postgres:16-alpine
     environment:

@@ -9,6 +9,12 @@ function shuffle(items){
   return items;
 }
 
+function finishGame(state){
+  if(state.gameOver)return;
+  for(let player=0;player<state.hands.length;player++)state.scores[player]-=state.hands[player].reduce((total,value)=>total+value,0);
+  state.gameOver=true;
+}
+
 function initialGameState(){
   const state=newState();
   state.bag=shuffle(state.bag);
@@ -219,7 +225,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
         state.turnNumber=(state.turnNumber??0)+1;
         while(state.hands[seat].length<7&&state.bag.length)state.hands[seat].push(state.bag.pop());
       }
-      if(!state.bag.length&&!state.hands[seat].length)state.gameOver=true;
+      if(!state.bag.length&&!state.hands[seat].length)finishGame(state);
     }));
 
     socket.on('game:end-turn',payload=>updateGame(payload,async({game,state,seat})=>{
@@ -249,7 +255,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
         state.previousTurnMoves=[];
         state.turnNumber=(state.turnNumber??0)+1;
       }
-      if(state.passed.every(Boolean)&&!state.bag.length)state.gameOver=true;
+      if(state.passed.every(Boolean)&&!state.bag.length)finishGame(state);
     }));
 
     socket.on('game:exchange',payload=>updateGame(payload,async({game,state,seat})=>{
@@ -286,8 +292,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
       if(!request||request.seat===seat)throw new Error('abandon_invalide');
       state.abandonRequest=null;
       if(payload?.accept!==true)return;
-      for(let player=0;player<state.hands.length;player++)state.scores[player]-=state.hands[player].reduce((total,value)=>total+value,0);
-      state.gameOver=true;
+      finishGame(state);
       state.abandoned=true;
     }));
   });

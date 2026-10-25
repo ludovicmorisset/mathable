@@ -166,6 +166,33 @@ test('accepter un abandon termine la partie et déduit les tuiles restantes',asy
   assert.deepEqual(alice.last('game:state').scores,[16,17]);
 });
 
+test('la fin par chevalet vide déduit les tuiles restantes de l’adversaire',async()=>{
+  const {game,connect}=fixture();
+  game.state.bag=[];
+  game.state.hands[0]=[3];
+  game.state.hands[1]=[6,8];
+  const alice=connect('player-a');
+  await alice.send('game:join',{code:'ABC123'});
+  await alice.send('game:place',{code:'ABC123',r:6,c:8,v:3});
+  assert.equal(game.state.gameOver,true);
+  assert.deepEqual(game.state.scores,[53,-14]);
+});
+
+test('la fin après deux passes déduit les tuiles restantes',async()=>{
+  const {game,connect}=fixture();
+  game.state.bag=[];
+  game.state.active=0;
+  game.state.hands=[[3,5],[6,8]];
+  const alice=connect('player-a');
+  const bob=connect('player-b');
+  await alice.send('game:join',{code:'ABC123'});
+  await bob.send('game:join',{code:'ABC123'});
+  await alice.send('game:pass',{code:'ABC123'});
+  await bob.send('game:pass',{code:'ABC123'});
+  assert.equal(game.state.gameOver,true);
+  assert.deepEqual(game.state.scores,[-8,-14]);
+});
+
 test('un changement de tour notifie le joueur qui doit jouer',async()=>{
   const notifications=[];
   const {connect}=fixture('turn',notification=>notifications.push(notification));
