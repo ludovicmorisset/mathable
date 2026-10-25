@@ -3,20 +3,18 @@ services:
     build: .
     environment:
       NODE_ENV: production
-      PORT: "${PORT}"
+      PORT: "${PORT:-3000}"
       DATABASE_URL: "postgres://${POSTGRES_USER:-mathable}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-mathable}"
-      SESSION_SECRET: "${SESSION_SECRET}"
-      SMTP_HOST: "${SMTP_HOST}"
-      SMTP_PORT: "${SMTP_PORT}"
-      SMTP_USER: "${SMTP_USER}"
-      SMTP_PASS: "${SMTP_PASS}"
-      SMTP_FROM: "${SMTP_FROM}"
-    ports:
-      - "${PORT}:${PORT}"
+      SESSION_SECRET: "${SESSION_SECRET:?Set SESSION_SECRET in .env}"
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      SMTP_FROM: "${SMTP_FROM:-}"
+    ports: ["${PORT:-3000}:${PORT:-3000}"]
     depends_on:
-      mathable_postgres: {condition: service_healthy}
-    container_name: mathable
-  mathable_postgres:
+      postgres: {condition: service_healthy}
+  postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
@@ -30,4 +28,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - reseau_interne
+    container_name: mathable_db
+    # Limites
+    mem_limit: 1024m
+    cpus: "1.0"
+
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    #Labels
+    labels:
+      glance.hide: true
+
 volumes: {pgdata: {}}
+
+networks:
+  reseau_interne:
+    external: true
