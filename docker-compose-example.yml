@@ -1,11 +1,12 @@
 services:
-  app:
+  mathable_app:
     build: .
+    container_name: mathable_app
     environment:
-      NODE_ENV: production
+      NODE_ENV: "${DOCKER_NODE_ENV:-production}"
       PORT: "${PORT:-3000}"
-      PGHOST: mathable_db
-      PGPORT: "5432"
+      PGHOST: "${POSTGRES_HOST:-mathable_db}"
+      PGPORT: "${POSTGRES_PORT:-5432}"
       PGDATABASE: "${POSTGRES_DB:-mathable}"
       PGUSER: "${POSTGRES_USER:-mathable}"
       PGPASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
@@ -18,21 +19,21 @@ services:
     ports:
       - "${PORT:-3000}:${PORT:-3000}"
     depends_on:
-      postgres:
+      mathable_db:
         condition: service_healthy
-    container_name: mathable_app
-    mem_limit: 1024m
-    cpus: "1.0"
+    networks:
+      - mathable_internal
+    mem_limit: "${APP_MEM_LIMIT:-1024m}"
+    cpus: "${APP_CPUS:-1.0}"
     logging:
       driver: json-file
       options:
-        max-size: 10m
-        max-file: "3"
-    networks:
-      - mathable_internal
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILES:-3}"
 
-  postgres:
-    image: postgres:16-alpine
+  mathable_db:
+    image: "${POSTGRES_IMAGE:-postgres:16-alpine}"
+    container_name: mathable_db
     environment:
       POSTGRES_USER: "${POSTGRES_USER:-mathable}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
@@ -48,15 +49,13 @@ services:
       retries: 10
     networks:
       - mathable_internal
-    container_name: mathable_db
-    mem_limit: 1024m
-    cpus: "1.0"
+    mem_limit: "${DB_MEM_LIMIT:-1024m}"
+    cpus: "${DB_CPUS:-1.0}"
     logging:
       driver: json-file
       options:
-        max-size: 10m
-        max-file: "3"
-
+        max-size: "${LOG_MAX_SIZE:-10m}"
+        max-file: "${LOG_MAX_FILES:-3}"
 
 volumes:
   pgdata: {}
