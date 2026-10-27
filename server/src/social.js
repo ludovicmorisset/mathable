@@ -128,7 +128,7 @@ export function registerSocialApi(app,{pool,auth}){
   });
 }
 
-export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}){
+export function registerGameSockets(io,{pool,sessions,notifyTurn,notifyGameEvent,resolveSession}){
   io.use((socket,next)=>{
     const sessionId=cookieValue(socket.handshake.headers.cookie,'mathable_session');
     const cached=sessionId&&sessions.get(sessionId);
@@ -174,6 +174,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
       const client=await pool.connect();
       let gameId;
       let nextTurnNotification=null;
+      let gameEvent=null;
       try{
         await client.query('BEGIN');
         const result=await client.query(`SELECT g.id,g.code,g.mode,g.state,gp.seat FROM games g
@@ -185,7 +186,12 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
         const seat=game.seat;
         const previousActive=state.active;
         if(state.gameOver)throw new Error('partie_terminee');
+        const wasGameOver=state.gameOver;
+        const previousAbandonRequest=state.abandonRequest;
         await action({client,game,state,seat});
+        if(!wasGameOver&&state.gameOver)gameEvent={event:'finished',state:{...state,code:game.code}};
+        if(!wasGameOver&&!previousAbandonRequest&&state.abandonRequest&&state.abandonRequest.seat===seat)gameEvent={event:'abandon-request',requesterSeat:seat,state:{...state,code:game.code}};
+        if(!wasGameOver&&state.abandonRequest===null&&previousAbandonRequest&&previousAbandonRequest.seat!==seat&&!state.gameOver)gameEvent={event:'abandon-declined',requesterSeat:previousAbandonRequest.seat,state:{...state,code:game.code}};
         if(game.mode==='turn'&&!state.gameOver&&state.active!==previousActive){
           const nextPlayer=await client.query('SELECT user_id FROM game_players WHERE game_id=$1 AND seat=$2',[gameId,state.active]);
           if(nextPlayer.rowCount)nextTurnNotification={gameId,userId:nextPlayer.rows[0].user_id};
@@ -200,6 +206,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
       }finally{client.release();}
       await sendState(gameId);
       if(nextTurnNotification&&notifyTurn)Promise.resolve().then(()=>notifyTurn(nextTurnNotification)).catch(error=>console.error('Notification de tour impossible:',error.message));
+      if(gameEvent&&notifyGameEvent)Promise.resolve().then(()=>notifyGameEvent({gameId,...gameEvent})).catch(error=>console.error('Notification de partie impossible:',error.message));
     }
 
     socket.on('game:place',payload=>updateGame(payload,async({game,state,seat})=>{
@@ -237,7 +244,7 @@ export function registerGameSockets(io,{pool,sessions,notifyTurn,resolveSession}
       state.active=1-seat;
       state.passed=[false,false];
       state.rackBonusEarned=[false,false];
-      if(!state.bag.length&&state.hands[seat].length===0)state.gameOver=true;
+      if(!state.bag.length&&state.hands[seat].length===0)finishGame(state);
     }));
 
     socket.on('game:pass',payload=>updateGame(payload,async({game,state,seat})=>{

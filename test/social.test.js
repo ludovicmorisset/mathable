@@ -19,7 +19,7 @@ class MockIo{
   in(room){return {fetchSockets:async()=>this.sockets.filter(socket=>socket.rooms.has(room))};}
 }
 
-function fixture(mode='turn',notifyTurn){
+function fixture(mode='turn',notifyTurn,notifyGameEvent){
   const gameState=newState();
   gameState.hands=[[3,5],[6,8]];
   const players=[{id:'player-a',user_id:'player-a',seat:0,username:'alice'},{id:'player-b',user_id:'player-b',seat:1,username:'bob'}];
@@ -53,7 +53,7 @@ function fixture(mode='turn',notifyTurn){
       };
     }
   };
-  registerGameSockets(io,{pool,sessions,notifyTurn});
+  registerGameSockets(io,{pool,sessions,notifyTurn,notifyGameEvent});
   function connect(userId){
     const socket=new MockSocket(userId);
     io.sockets.push(socket);
@@ -124,8 +124,9 @@ test('un joueur peut passer son tour en mode tour par tour',async()=>{
   assert.equal(game.state.passed[0],true);
 });
 
-test('une demande d’abandon attend la réponse de l’adversaire',async()=>{
-  const {game,connect}=fixture();
+test('une demande d’abandon attend la réponse de l’adversaire et envoie un email au joueur concerné',async()=>{
+  const notifications=[];
+  const {game,connect}=fixture('turn',undefined,notification=>notifications.push(notification));
   game.state.scores=[24,31];
   const alice=connect('player-a');
   const bob=connect('player-b');
@@ -137,10 +138,14 @@ test('une demande d’abandon attend la réponse de l’adversaire',async()=>{
   assert.equal(game.state.abandonRequest.seat,0);
   assert.equal(alice.last('game:state').abandonRequest.seat,0);
   assert.equal(bob.last('game:state').abandonRequest.seat,0);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(notifications[0].event,'abandon-request');
+  assert.equal(notifications[0].requesterSeat,0);
 });
 
-test('l’adversaire peut refuser une demande d’abandon',async()=>{
-  const {game,connect}=fixture();
+test('l’adversaire peut refuser une demande d’abandon et le demandeur en est informé',async()=>{
+  const notifications=[];
+  const {game,connect}=fixture('turn',undefined,notification=>notifications.push(notification));
   const alice=connect('player-a');
   const bob=connect('player-b');
   await alice.send('game:join',{code:'ABC123'});
@@ -149,10 +154,14 @@ test('l’adversaire peut refuser une demande d’abandon',async()=>{
   await bob.send('game:abandon-response',{code:'ABC123',accept:false});
   assert.equal(game.state.gameOver,false);
   assert.equal(game.state.abandonRequest,null);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(notifications.at(-1).event,'abandon-declined');
+  assert.equal(notifications.at(-1).requesterSeat,0);
 });
 
 test('accepter un abandon termine la partie et déduit les tuiles restantes',async()=>{
-  const {game,connect}=fixture();
+  const notifications=[];
+  const {game,connect}=fixture('turn',undefined,notification=>notifications.push(notification));
   game.state.scores=[24,31];
   const alice=connect('player-a');
   const bob=connect('player-b');
@@ -164,6 +173,9 @@ test('accepter un abandon termine la partie et déduit les tuiles restantes',asy
   assert.equal(game.state.abandoned,true);
   assert.deepEqual(game.state.scores,[16,17]);
   assert.deepEqual(alice.last('game:state').scores,[16,17]);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(notifications.at(-1).event,'finished');
+  assert.deepEqual(notifications.at(-1).state.scores,[16,17]);
 });
 
 test('la fin par chevalet vide déduit les tuiles restantes de l’adversaire',async()=>{
