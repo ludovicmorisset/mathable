@@ -27,6 +27,21 @@
   let replayInitialized=false;
   let handledAbandonRequestId=null;
   let pendingOwnAbandonId=null;
+  let abandonDialogAction=null;
+  const abandonDialog=$('abandonDialog');
+  abandonDialog.addEventListener('close',()=>{
+    const action=abandonDialogAction;
+    abandonDialogAction=null;
+    action?.(abandonDialog.returnValue==='confirm');
+  });
+  function showAbandonDialog(title,message,confirmLabel,action){
+    $('abandonDialogTitle').textContent=title;
+    $('abandonDialogText').textContent=message;
+    $('abandonDialogConfirm').textContent=confirmLabel;
+    abandonDialog.returnValue='';
+    abandonDialogAction=action;
+    abandonDialog.showModal();
+  }
   const socket=io({autoConnect:false});
 
   function squareType(row,col){
@@ -175,7 +190,7 @@
 
   $('turnButton').onclick=()=>socket.emit(state.mode==='turn'?'game:end-turn':'game:pass',{code});
   $('passButton').onclick=()=>socket.emit('game:pass',{code});
-  $('abandonButton').onclick=()=>{if(window.confirm('Demander à votre adversaire de terminer la partie ?'))socket.emit('game:abandon',{code});};
+  $('abandonButton').onclick=()=>showAbandonDialog('Abandonner la partie ?','Demander à votre adversaire de terminer la partie ?','Envoyer la demande',confirmed=>{if(confirmed)socket.emit('game:abandon',{code});});
   $('exchangeButton').onclick=()=>{
     if(!exchangeMode){exchangeMode=true;selected=null;selectedForExchange.clear();render();status('Choisissez une ou plusieurs tuiles à échanger.');return;}
     if(!selectedForExchange.size){exchangeMode=false;render();status('');return;}
@@ -197,8 +212,7 @@
       status('Votre adversaire a refusé la demande.');
     }else if(request&&request.seat!==next.seat&&request.id!==handledAbandonRequestId){
       handledAbandonRequestId=request.id;
-      const accepted=window.confirm(`${next.players[request.seat]} souhaite terminer la partie. Acceptez-vous l’abandon ?`);
-      socket.emit('game:abandon-response',{code,accept:accepted});
+      showAbandonDialog('Demande d’abandon',`${next.players[request.seat]} souhaite terminer la partie. Acceptez-vous l’abandon ?`,'Accepter',accepted=>socket.emit('game:abandon-response',{code,accept:accepted}));
     }else if(!request){
       handledAbandonRequestId=null;
       if(next.gameOver)pendingOwnAbandonId=null;

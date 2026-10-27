@@ -33,5 +33,13 @@
       </aside>
     </div>
   </main>
+  <dialog id="abandonDialog" class="abandon-dialog" aria-labelledby="abandonDialogTitle" aria-describedby="abandonDialogText">
+    <form method="dialog">
+      <p class="abandon-dialog-eyebrow">Confirmation</p>
+      <h2 id="abandonDialogTitle"></h2>
+      <p id="abandonDialogText"></p>
+      <div class="abandon-dialog-actions"><button class="button subtle" value="cancel" type="submit">Annuler</button><button id="abandonDialogConfirm" class="button primary" value="confirm" type="submit">Confirmer</button></div>
+    </form>
+  </dialog>
 </body>
 </html>

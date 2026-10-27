@@ -1,3 +1,23 @@
+.abandon-dialog{
+  width:min(420px,calc(100% - 32px));
+  padding:0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--ink);
+  box-shadow:0 24px 70px #10233f40;
+}
+.abandon-dialog::backdrop{background:#10233f80;backdrop-filter:blur(3px)}
+.abandon-dialog form{padding:26px}
+.abandon-dialog-eyebrow{margin:0 0 8px;color:var(--blue);font-size:11px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase}
+.abandon-dialog h2{margin:0;font:600 22px 'Space Grotesk',sans-serif}
+.abandon-dialog form>p:not(.abandon-dialog-eyebrow){margin:12px 0 0;color:var(--muted);font-size:14px;line-height:1.55}
+.abandon-dialog-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:22px}
+.abandon-dialog .button{min-height:40px}
+.abandon-dialog .button.subtle{border-radius:10px;background:#fff}
+.abandon-dialog .button.primary{border-radius:10px}
+.abandon-dialog .button:focus-visible{outline:3px solid #64a9f5;outline-offset:2px}
+@media(max-width:560px){.abandon-dialog form{padding:22px}}
 .online-tile{
   border-top-color:#fff3a6;
   border-bottom-color:#a66f00;
