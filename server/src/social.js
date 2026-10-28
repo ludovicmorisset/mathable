@@ -38,7 +38,7 @@ function publicState(state,seat,mode,code,players){
   return {...state,bag:[],bagCount:state.bag.length,hands:state.hands.map((hand,index)=>index===seat?hand:hand.map(()=>null)),mode,code,seat,players,abandonRequest:state.abandonRequest??null};
 }
 
-export function registerSocialApi(app,{pool,auth}){
+export function registerSocialApi(app,{pool,auth,notifyGameCreated}){
   app.get('/api/me',auth,async(req,res)=>{
     const result=await pool.query('SELECT id,username,email FROM users WHERE id=$1',[req.user.id]);
     res.json(result.rows[0]||null);
@@ -112,6 +112,7 @@ export function registerSocialApi(app,{pool,auth}){
       const game=await client.query('INSERT INTO games(code,state,mode,created_by) VALUES($1,$2,$3,$4) RETURNING id,code,mode',[code,JSON.stringify(state),mode,req.user.id]);
       await client.query('INSERT INTO game_players(game_id,user_id,seat) VALUES($1,$2,0),($1,$3,1)',[game.rows[0].id,req.user.id,result.rows[0].id]);
       await client.query('COMMIT');
+      if(notifyGameCreated)Promise.resolve().then(()=>notifyGameCreated({gameId:game.rows[0].id,createdBy:req.user.id})).catch(error=>console.error('Notification de création de partie impossible:',error.message));
       res.status(201).json(game.rows[0]);
     }catch(error){
       await client.query('ROLLBACK');

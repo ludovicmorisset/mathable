@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express'; import http from 'node:http'; import helmet from 'helmet'; import rateLimit from 'express-rate-limit'; import {Server} from 'socket.io'; import pg from 'pg'; import bcrypt from 'bcryptjs'; import crypto from 'node:crypto'; import fs from 'node:fs/promises';
-import {makeBag} from './game/rules.js'; import {hashPassword,verifyPassword,validPassword,code,digest} from './auth.js';
+import {makeBag} from './game/rules.js';
+import {renderBoardPng} from './game/board-image.js'; import {hashPassword,verifyPassword,validPassword,code,digest} from './auth.js';
 import {registerSocialApi,registerGameSockets} from './social.js';
 import {sendBrandedEmail,sendCodeEmail} from './email.js';
 const {Pool}=pg; const app=express(); const server=http.createServer(app); const io=new Server(server,{cors:{origin:false}}); const pool=new Pool(process.env.PGHOST?{host:process.env.PGHOST,port:Number(process.env.PGPORT||5432),database:process.env.PGDATABASE,user:process.env.PGUSER,password:process.env.PGPASSWORD}:{connectionString:process.env.DATABASE_URL});
@@ -19,6 +20,27 @@ app.post('/api/auth/password-reset/request',passwordRecoveryLimit,async(req,res)
 app.post('/api/auth/password-reset/confirm',passwordRecoveryLimit,async(req,res)=>{const email=String(req.body.email||'').trim().toLowerCase(),c=String(req.body.code||''),password=String(req.body.password||'');if(!email.includes('@')||!/^\d{6}$/.test(c)||!validPassword(password))return res.status(400).json({error:'reinitialisation_invalide'});let client;try{client=await pool.connect();await client.query('BEGIN');const result=await client.query('SELECT u.id,vc.id code_id,vc.code_hash,vc.attempts FROM users u JOIN verification_codes vc ON vc.user_id=u.id WHERE u.email=$1 AND u.verified=true AND vc.purpose=\'password_reset\' AND vc.used_at IS NULL AND vc.expires_at>now() ORDER BY vc.id DESC LIMIT 1 FOR UPDATE OF vc',[email]);if(!result.rowCount||result.rows[0].attempts>=5){await client.query('ROLLBACK');return res.status(400).json({error:'code_expire_ou_bloque'})}const row=result.rows[0];await client.query('UPDATE verification_codes SET attempts=attempts+1 WHERE id=$1',[row.code_id]);if(digest(c)!==row.code_hash){await client.query('COMMIT');return res.status(400).json({error:'code_incorrect'})}const passwordHash=await hashPassword(password);await client.query('UPDATE users SET password_hash=$1 WHERE id=$2',[passwordHash,row.id]);await client.query('UPDATE verification_codes SET used_at=now() WHERE user_id=$1 AND purpose=$2 AND used_at IS NULL',[row.id,'password_reset']);await client.query('DELETE FROM auth_sessions WHERE user_id=$1',[row.id]);await client.query('COMMIT');for(const [sessionId,user] of sessions)if(user.id===row.id)sessions.delete(sessionId);res.json({message:'mot_de_passe_modifie'})}catch(error){if(client)await client.query('ROLLBACK').catch(()=>{});console.error('Confirmation de réinitialisation impossible:',error.message);res.status(500).json({error:'requete_impossible'})}finally{client?.release()}});
 app.post('/api/auth/login',async(req,res)=>{const email=String(req.body.email||'').trim().toLowerCase(),r=await pool.query('SELECT * FROM users WHERE email=$1',[email]);if(!r.rowCount||!r.rows[0].verified||!(await verifyPassword(String(req.body.password||''),r.rows[0].password_hash)))return res.status(401).json({error:'identifiants_invalides'});const rememberMe=req.body.remember==='on'||req.body.remember===true;const {id:sessionId,expiresAt}=issueSessionCookie(res,rememberMe);const user={id:r.rows[0].id,email,username:r.rows[0].username,...(expiresAt?{expiresAt:expiresAt.getTime()}:{})};sessions.set(sessionId,user);if(rememberMe)await pool.query('INSERT INTO auth_sessions(session_hash,user_id,expires_at) VALUES($1,$2,$3) ON CONFLICT(session_hash) DO UPDATE SET user_id=EXCLUDED.user_id,expires_at=EXCLUDED.expires_at',[digest(sessionId),user.id,expiresAt]);res.json({email,username:r.rows[0].username})});
 app.post('/api/auth/logout',async(req,res)=>{const id=sessionId(req);if(id){sessions.delete(id);await pool.query('DELETE FROM auth_sessions WHERE session_hash=$1',[digest(id)]).catch(error=>console.error('Suppression de session impossible:',error.message))}res.setHeader('Set-Cookie',`mathable_session=; Max-Age=0; HttpOnly; SameSite=Lax; Path=/; ${process.env.NODE_ENV==='production'?'Secure;':''}`);res.json({ok:true})});
+async function notifyGameCreated({gameId,createdBy}){
+  const result=await pool.query(`SELECT g.code,g.mode,gp.user_id,u.email,u.username FROM games g
+    JOIN game_players gp ON gp.game_id=g.id JOIN users u ON u.id=gp.user_id
+    WHERE g.id=$1 ORDER BY gp.seat`,[gameId]);
+  if(result.rowCount!==2)return;
+  const creator=result.rows.find(player=>player.user_id===createdBy);
+  const recipient=result.rows.find(player=>player.user_id!==createdBy);
+  if(!creator||!recipient)return;
+  await sendBrandedEmail({to:recipient.email,subject:'Nouvelle partie Mathable',title:'Vous êtes invité à jouer',message:`${creator.username} a créé une partie et vous attend sur Mathable.`,details:[['Partie',result.rows[0].code],['Mode',result.rows[0].mode==='turn'?'Tour par tour':'Simultané']]});
+}
+async function notifyTurn({gameId,userId}){
+  const result=await pool.query(`SELECT g.code,g.state->'board' AS board,u.email,u.username,opponent.username AS opponent FROM games g
+    JOIN game_players gp ON gp.game_id=g.id AND gp.user_id=$2
+    JOIN users u ON u.id=gp.user_id
+    JOIN game_players other ON other.game_id=g.id AND other.user_id<>gp.user_id
+    JOIN users opponent ON opponent.id=other.user_id
+    WHERE g.id=$1 AND g.mode='turn' AND g.state->>'active'=gp.seat::TEXT AND (g.state->>'gameOver') IS DISTINCT FROM 'true'`,[gameId,userId]);
+  if(!result.rowCount)return;
+  const player=result.rows[0];
+  await sendBrandedEmail({to:player.email,subject:'À votre tour de jouer sur Mathable',title:'C’est à votre tour',message:`${player.opponent} a terminé son tour. Connectez-vous à Mathable pour jouer.`,details:[['Partie',player.code]],inlineImage:{filename:'plateau-mathable.png',content:renderBoardPng(player.board),contentType:'image/png',cid:'mathable-board'}});
+}
 async function notifyGameEvent({gameId,state,event,requesterSeat}){
   const result=await pool.query(`SELECT gp.seat,u.email,u.username FROM game_players gp JOIN users u ON u.id=gp.user_id WHERE gp.game_id=$1 ORDER BY gp.seat`,[gameId]);
   if(result.rowCount!==2)return;
@@ -38,7 +60,7 @@ async function notifyGameEvent({gameId,state,event,requesterSeat}){
   const message=state.abandoned?`La partie s’est terminée d’un commun accord. ${resultLabel}.`:`${resultLabel}.`;
   await Promise.all(players.map((player,index)=>sendBrandedEmail({to:player.email,subject:'Résultat de votre partie Mathable',title:'Partie terminée',message,details:[['Votre score',scores[index]],['Score de '+players[1-index].username,scores[1-index]],['Résultat',resultLabel],['Partie',state.code]]})));
 }
-registerSocialApi(app,{pool,auth});
+registerSocialApi(app,{pool,auth,notifyGameCreated});
 app.get('/api/health',(req,res)=>res.json({ok:true,bag:makeBag().length}));
-registerGameSockets(io,{pool,sessions,resolveSession,notifyGameEvent});
+registerGameSockets(io,{pool,sessions,resolveSession,notifyTurn,notifyGameEvent});
 async function boot(){try{await pool.query(await fs.readFile(new URL('../migrations/001_init.sql',import.meta.url),'utf8'));}catch(error){console.error('Migration PostgreSQL impossible:',error.message);await pool.end().catch(()=>{});process.exitCode=1;return}const port=Number(process.env.PORT||3000);server.listen(port,()=>console.log(`Mathable écoute sur ${port}`));}boot();

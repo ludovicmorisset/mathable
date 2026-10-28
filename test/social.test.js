@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newState} from '../server/src/game/rules.js';
-import {registerGameSockets} from '../server/src/social.js';
+import {registerGameSockets,registerSocialApi} from '../server/src/social.js';
 
 class MockSocket{
   constructor(userId){this.data={userId};this.handshake={headers:{cookie:`mathable_session=${userId}`}};this.handlers={};this.messages=[];this.rooms=new Set();}
@@ -203,6 +203,33 @@ test('la fin après deux passes déduit les tuiles restantes',async()=>{
   await bob.send('game:pass',{code:'ABC123'});
   assert.equal(game.state.gameOver,true);
   assert.deepEqual(game.state.scores,[-8,-14]);
+});
+
+test('la création d’une partie notifie le joueur invité',async()=>{
+  const routes={};
+  const notifications=[];
+  const app={get(){},delete(){},post(path,...handlers){routes[path]=handlers.at(-1)}};
+  const pool={
+    async query(sql){
+      if(sql.startsWith('SELECT u.id FROM users'))return {rowCount:1,rows:[{id:'player-b'}]};
+      throw new Error(`Unexpected query: ${sql}`);
+    },
+    async connect(){
+      return {
+        async query(sql){
+          if(sql.startsWith('INSERT INTO games'))return {rowCount:1,rows:[{id:'game-id',code:'ABC123',mode:'turn'}]};
+          return {rowCount:1,rows:[]};
+        },
+        release(){}
+      };
+    }
+  };
+  registerSocialApi(app,{pool,auth:()=>{},notifyGameCreated:notification=>notifications.push(notification)});
+  const response={statusCode:200,status(code){this.statusCode=code;return this},json(body){this.body=body}};
+  await routes['/api/games']({body:{friend:'bob'},user:{id:'player-a'}},response);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(response.statusCode,201);
+  assert.deepEqual(notifications,[{gameId:'game-id',createdBy:'player-a'}]);
 });
 
 test('un changement de tour notifie le joueur qui doit jouer',async()=>{
